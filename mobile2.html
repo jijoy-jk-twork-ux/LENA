@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>LENA Mobile OS - Pro</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+:root{
+  --accent: #007aff;
+  --accent-glow: rgba(0, 122, 255, 0.4);
+  --bg-dark: #000000;
+  --surface: rgba(25, 25, 30, 0.75);
+  --surface-solid: #1c1c1e;
+  --text-main: #f5f5f7;
+  --text-muted: #86868b;
+  --radius-screen: 44px;
+}
+
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background: #0b0f19;
+  color:var(--text-main);
+  font-family:'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  user-select:none;
+}
+
+button,input{font:inherit;}
+button{cursor:pointer;color:inherit;border:none;background:none;}
+
+/* Realistic Phone Enclosure Frame */
+.device-wrapper {
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: radial-gradient(circle at 50% 30%, #1a2639 0%, #060911 100%);
+}
+
+#mobile {
+  width:100%;
+  max-width: 414px;
+  height:100%;
+  max-height: 896px;
+  position:relative;
+  overflow:hidden;
+  background: #000;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 0 12px #1f242d, 0 0 0 14px #0d1017, inset 0 0 0 2px rgba(255,255,255,0.15);
+}
+
+@media(min-width: 450px) {
+  #mobile {
+    border-radius: var(--radius-screen);
+    height: 88vh;
+  }
+}
+
+/* Status Bar */
+.status-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 100;
+  color: #fff;
+  letter-spacing: -0.2px;
+}
+
+.status-bar .right-icons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+/* Dynamic Island / Notch */
+.dynamic-island {
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 110px;
+  height: 28px;
+  background: #000;
+  border-radius: 20px;
+  z-index: 101;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.camera-dot {
+  width: 10px;
+  height: 10px;
+  background: #08111e;
+  border-radius: 50%;
+  border: 1px solid #1a2b48;
+}
+.sensor-dot {
+  width: 6px;
+  height: 6px;
+  background: #0d1b2a;
+  border-radius: 50%;
+}
+
+#screen{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+  background: #07111f;
+}
+#screen::after {
+  content:'';
+  position: absolute;
+  inset:0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(5,10,20,0.6) 100%);
+  pointer-events: none;
+}
+
+.page{
+  position:absolute;
+  inset:0;
+  display:none;
+  overflow-y:auto;
+  padding: 50px 18px 110px;
+  scrollbar-width:none;
+  z-index: 5;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(10, 15, 25, 0.75);
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.page::-webkit-scrollbar{display:none}
+.page.active{display:block}
+
+/* Fullscreen App Pages (Spymo & Browser full overlay) */
+.fullscreen-app {
+  position: absolute;
+  inset: 0;
+  background: #07111f;
+  z-index: 25;
+  display: none;
+  flex-direction: column;
+  padding: 44px 0 54px;
+}
+.fullscreen-app.active {
+  display: flex;
+}
+.app-header {
+  height: 50px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  background: rgba(16, 30, 49, 0.95);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.app-header h3 {
+  margin: 0;
+  font-size: 16px;
+  flex: 1;
+}
+.full-iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #ffffff;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Lock Screen - Solid Premium Gradient */
+#lock{
+  position:absolute;
+  inset:0;
+  z-index:30;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:space-between;
+  padding: 70px 24px 50px;
+  background: linear-gradient(145deg, #091322 0%, #03060c 100%);
+  transition: transform .4s cubic-bezier(0.77, 0, 0.175, 1), opacity .3s;
+}
+#lock.gone{transform:translateY(-100%);opacity:0;pointer-events:none}
+
+.lock-clock-container {
+  text-align: center;
+  margin-top: 10px;
+}
+.lock-time {
+  font-size: 72px;
+  font-weight: 300;
+  letter-spacing: -2px;
+  color: #fff;
+  text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.lock-date {
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.7);
+  margin-top: 6px;
+}
+
+#pinBox{
+  display:none;
+  width:100%;
+  max-width:280px;
+  background: rgba(25, 30, 45, 0.95);
+  padding: 24px;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.15);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes popIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+#swipeArea{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:14px;
+  font-size:12px;
+  color:rgba(255,255,255,0.85);
+  letter-spacing:1.5px;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 15px;
+  width: 100%;
+  touch-action: none;
+}
+.swipebar{height:5px;width:120px;border-radius:10px;background:rgba(255,255,255,0.7);box-shadow: 0 0 10px rgba(255,255,255,0.4);}
+
+input{
+  width:100%;
+  padding:14px 16px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,0.15);
+  background:rgba(0,0,0,0.4);
+  color:white;
+  outline:none;
+  margin:10px 0;
+  font-size:15px;
+  transition: all 0.2s;
+}
+input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.btn{
+  border:0;
+  background:var(--accent);
+  padding:14px 20px;
+  border-radius:14px;
+  font-weight:600;
+  color:white;
+  font-size:15px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 15px rgba(0,122,255,0.3);
+}
+.btn:active { transform: scale(0.96); }
+.btn.secondary{background:rgba(255,255,255,0.1); box-shadow: none;}
+.btn.secondary:hover { background: rgba(255,255,255,0.15); }
+.full{width:100%;margin-top:10px}
+
+.top{display:flex;align-items:center;gap:14px;margin-bottom:24px}
+.top h2{font-size:22px;margin:0;flex:1;font-weight:700;letter-spacing:-0.5px;}
+.back{
+  background:rgba(255,255,255,0.1);
+  border:0;
+  border-radius:12px;
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  font-size:20px;
+  transition: background 0.2s;
+}
+.back:hover { background: rgba(255,255,255,0.2); }
+
+.sub{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+
+/* Home Grid & App Icons */
+.home-header {
+  padding: 5px 0 10px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:16px 10px;
+  margin-top:5px;
+  padding-bottom: 20px;
+}
+
+.appicon{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  background:none;
+  border:0;
+  font-size:11px;
+  font-weight:500;
+  color: var(--text-main);
+  transition: transform 0.2s;
+}
+.appicon:active { transform: scale(0.92); }
+
+.iconbox{
+  width:56px;
+  height:56px;
+  border-radius:16px;
+  display:grid;
+  place-items:center;
+  font-size:26px;
+  background:linear-gradient(145deg,#2c3e50,#1a252f);
+  border:1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.3);
+}
+
+.blue{background:linear-gradient(135deg,#007aff,#0051a8)}
+.green{background:linear-gradient(135deg,#34c759,#248a3d)}
+.purple{background:linear-gradient(135deg,#af52de,#7b2cbf)}
+.orange{background:linear-gradient(135deg,#ff9500,#cc7500)}
+.red{background:linear-gradient(135deg,#ff3b30,#a52446)}
+.musicIcon{background:linear-gradient(135deg,#fa233b,#d0001b)}
+.browserIcon{background:linear-gradient(135deg,#5856d6,#3634a3)}
+
+.hero{
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:20px;
+  padding:16px;
+  background:linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  margin-bottom: 12px;
+}
+.hero h3{margin:0 0 4px; font-size:20px; font-weight:700;}
+
+.card{
+  background: rgba(28, 28, 30, 0.7);
+  border:1px solid rgba(255,255,255,0.08);
+  padding:16px;
+  border-radius:18px;
+  margin:12px 0;
+  backdrop-filter: blur(15px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+.rowitem{display:flex;align-items:center;gap:14px}
+.rowitem>div:first-child{flex:1;min-width:0}
+.rowitem p{margin:4px 0;color:var(--text-muted);font-size:13px}
+.small{font-size:13px;color:var(--text-muted);line-height:1.5}
+
+/* Dock at bottom of home screen - Pushed up above Nav Bar */
+.home-dock {
+  position: absolute;
+  bottom: 62px;
+  left: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 26px;
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 10;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+.home-dock .iconbox {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 18px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* Navigation Bar */
+#nav{
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  height:54px;
+  display:flex;
+  align-items:center;
+  justify-content:space-evenly;
+  background: rgba(10, 15, 25, 0.95);
+  backdrop-filter: blur(20px);
+  border-top:1px solid rgba(255,255,255,0.08);
+  z-index:40;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+#nav button{
+  background:none;
+  border:0;
+  font-size:20px;
+  padding:10px 24px;
+  color: rgba(255,255,255,0.7);
+  transition: color 0.2s;
+}
+#nav button:hover { color: #fff; }
+
+#toast{
+  position:absolute;
+  z-index:100;
+  bottom:80px;
+  left:50%;
+  transform:translateX(-50%);
+  background: rgba(40, 40, 45, 0.95);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  max-width: 90%;
+  text-align:center;
+  display:none;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  animation: toastPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes toastPop {
+  from { opacity: 0; transform: translate(-50%, 20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.videoFrame{width:100%;aspect-ratio:16/9;border:0;border-radius:14px;box-shadow: 0 8px 20px rgba(0,0,0,0.4);}
+audio{width:100%;margin-top:14px;accent-color: var(--accent);}
+</style>
+</head>
+<body>
+<div class="device-wrapper">
+<div id="mobile">
+  <!-- Status Bar & Dynamic Island -->
+  <div class="status-bar">
+    <span>09:00</span>
+    <div class="dynamic-island">
+      <div class="camera-dot"></div>
+      <div class="sensor-dot"></div>
+    </div>
+    <div class="right-icons">
+      <span>5G</span>
+      <span>🔋 100%</span>
+    </div>
+  </div>
+
+  <div id="screen">
+
+    <!-- Lock Screen -->
+    <section id="lock">
+      <div class="lock-clock-container">
+        <div class="lock-time">09:00</div>
+        <div class="lock-date">LENA</div>
+      </div>
+      
+      <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+        <div id="pinBox">
+          <div style="text-align:center; margin-bottom: 12px;"><b id="lockTitle">Enter PIN</b></div>
+          <input id="unlockPin" type="password" inputmode="numeric" maxlength="12" placeholder="PIN Code">
+          <button class="btn full" onclick="unlockWithPin()">Unlock Device</button>
+        </div>
+      </div>
+
+      <div id="swipeArea" onclick="attemptSwipe()">
+        <span id="swipeText">SWIPE UP OR TAP TO UNLOCK</span>
+        <div class="swipebar"></div>
+      </div>
+    </section>
+
+    <!-- Home Screen -->
+    <section class="page active" id="home">
+      <div class="home-header">
+        <div class="hero" style="background: linear-gradient(135deg, rgba(0,122,255,0.2), rgba(88,86,214,0.1)); border-color: rgba(0,122,255,0.3);">
+          <div class="sub">LENA OS 1.1.0 Pro</div>
+          <h3 id="greetingHeader" style="margin-top:4px">Hello, Player.</h3>
+          <p class="small" style="margin:0">Your high-end mobile experience inside MINEcity.</p>
+        </div>
+      </div>
+
+      <div class="grid">
+        <button class="appicon" onclick="openPage('call')"><span class="iconbox green">☎</span>Call</button>
+        <button class="appicon" onclick="unavailable('Messenger')"><span class="iconbox blue">✉</span>Chat</button>
+        <button class="appicon" onclick="openSpymo()"><span class="iconbox purple">S</span>Spymo</button>
+        <button class="appicon" onclick="openPage('etube')"><span class="iconbox red">▶</span>eTube</button>
+        <button class="appicon" onclick="openPage('browser')"><span class="iconbox browserIcon">◎</span>Browser</button>
+        <button class="appicon" onclick="openPage('music')"><span class="iconbox musicIcon">♫</span>Music</button>
+        <button class="appicon" onclick="openPage('settings')"><span class="iconbox" style="background:linear-gradient(135deg,#8e8e93,#636366)">⚙</span>Settings</button>
+      </div>
+
+      <!-- Dock -->
+      <div class="home-dock">
+        <button class="appicon" onclick="openPage('call')"><span class="iconbox green" style="width:40px;height:40px;font-size:18px">☎</span></button>
+        <button class="appicon" onclick="openPage('browser')"><span class="iconbox browserIcon" style="width:40px;height:40px;font-size:18px">◎</span></button>
+        <button class="appicon" onclick="openPage('music')"><span class="iconbox musicIcon" style="width:40px;height:40px;font-size:18px">♫</span></button>
+        <button class="appicon" onclick="openPage('etube')"><span class="iconbox red" style="width:40px;height:40px;font-size:18px">▶</span></button>
+      </div>
+    </section>
+
+    <!-- Call Page -->
+    <section class="page" id="call">
+      <div class="top"><button class="back" onclick="goBack()">‹</button><h2>Phone</h2></div>
+      <div class="hero" style="text-align: center; padding: 30px 20px;">
+        <div class="iconbox green" style="margin: 0 auto 15px; width:70px; height:70px; font-size:32px;">☎</div>
+        <h3>LENA Calls</h3>
+        <p class="small">Dialer network is ready for integration.</p>
+      </div>
+      <button class="btn full" onclick="unavailable('Calling')">Open Keypad</button>
+    </section>
+
+    <!-- eTube Page -->
+    <section class="page" id="etube">
+      <div class="top"><button class="back" onclick="goBack()">‹</button><h2>eTube Pro</h2></div>
+      <p class="small" style="margin-top:0">Your gaming videos and MINEcity broadcasts.</p>
+      <div id="videoList" style="margin-top: 15px;"></div>
+      <div class="card">
+        <b>Add a Video</b>
+        <input id="videoTitle" placeholder="Video Title">
+        <input id="videoUrl" placeholder="YouTube Video URL">
+        <button class="btn full" onclick="addVideo()">Add to eTube</button>
+        <p class="small" style="margin-top:10px">Saved locally to your device storage.</p>
+      </div>
+    </section>
+
+    <!-- Fullscreen Spymo App Overlay -->
+    <div class="fullscreen-app" id="spymoApp">
+      <div class="app-header">
+        <button class="back" onclick="closeFullscreenApp('spymoApp')">‹</button>
+        <h3>Spymo App</h3>
+      </div>
+      <iframe class="full-iframe" id="spymoIframe" sandbox="allow-forms allow-scripts allow-same-origin allow-popups" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    </div>
+
+    <!-- Fullscreen Browser App Overlay -->
+    <div class="fullscreen-app" id="browserApp">
+      <div class="app-header">
+        <button class="back" onclick="closeFullscreenApp('browserApp')">‹</button>
+        <h3 id="browserTitle">Browser</h3>
+      </div>
+      <iframe class="full-iframe" id="browserIframe" sandbox="allow-forms allow-scripts allow-same-origin allow-popups" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    </div>
+
+    <!-- Standard Browser Selection/Settings Page -->
+    <section class="page" id="browser">
+      <div class="top"><button class="back" onclick="goBack()">‹</button><h2>MINEcity Browser</h2></div>
+      <div class="card">
+        <h3>Quick Web Apps</h3>
+        <p class="small">Tap any popular site to launch instantly in full screen:</p>
+        <button class="btn full" onclick="launchCustomWeb('https://www.google.com', 'Google')">Launch Google</button>
+        <button class="btn secondary full" onclick="launchCustomWeb('https://wikipedia.org', 'Wikipedia')">Launch Wikipedia</button>
+      </div>
+      <div class="card">
+        <b>Enter Custom Website URL</b>
+        <input id="customBrowserUrl" placeholder="https://example.com">
+        <button class="btn full" onclick="launchTypedBrowser()">Open Website Fullscreen</button>
+      </div>
+    </section>
+
+    <!-- Music Page -->
+    <section class="page" id="music">
+      <div class="top"><button class="back" onclick="goBack()">‹</button><h2>LENA Music</h2></div>
+      <div class="hero" style="background: linear-gradient(135deg, rgba(250,35,59,0.2), rgba(160,0,27,0.1)); border-color: rgba(250,35,59,0.3);">
+        <div style="font-size:36px; margin-bottom: 6px;">♫</div>
+        <h3 style="margin:0 0 4px">Your Soundtrack</h3>
+        <p class="small">High-fidelity audio inside MINEcity.</p>
+      </div>
+      <input id="musicSearch" placeholder="🔍 Search songs..." oninput="renderMusic()">
+      <div class="rowitem" style="margin:16px 0"><b style="flex:1">Library</b><button class="btn" style="padding: 10px 16px; font-size: 13px;" onclick="showMusicAdd()">＋ Add Song</button></div>
+      <div id="musicList"></div>
+      
+      <div class="card" id="musicAddBox" style="display:none">
+        <h3 style="margin-top:0">Add New Track</h3>
+        <input id="musicTitle" placeholder="Song Title">
+        <input id="musicArtist" placeholder="Artist Name">
+        <input id="musicUrl" placeholder="Direct HTTPS Audio URL">
+        <button class="btn full" onclick="addMusic()">Save Track</button>
+        <button class="btn secondary full" onclick="$('musicAddBox').style.display='none'">Cancel</button>
+        <p class="small">Must be a direct accessible HTTPS audio link.</p>
+      </div>
+
+      <div class="card">
+        <div class="sub">NOW PLAYING</div>
+        <h3 id="playingTitle" style="font-size: 18px; margin: 6px 0 2px;">Nothing playing</h3>
+        <p id="playingArtist" class="small">Select a track from your library.</p>
+        <audio id="musicPlayer" controls preload="none"></audio>
+      </div>
+    </section>
+
+    <!-- Settings Page -->
+    <section class="page" id="settings">
+      <div class="top"><button class="back" onclick="goBack()">‹</button><h2>Settings</h2></div>
+      <div class="card">
+        <div class="sub">DEVICE IDENTITY</div>
+        <h3 style="margin: 6px 0 12px;">LENA Pro</h3>
+        <input id="deviceName" maxlength="30" placeholder="Mobile Name">
+        <button class="btn full" onclick="saveDevice()">Save Device Name</button>
+        <div class="rowitem" style="margin-top:16px"><div><b>Operating System</b><p>LENA OS Pro Edition</p></div><b>1.1.0</b></div>
+      </div>
+
+      <div class="card">
+        <div class="sub">SECURITY</div>
+        <h3 style="margin: 6px 0 4px;">Screen Lock PIN</h3>
+        <p class="small" id="pinStatus" style="margin-bottom:12px">No PIN configured.</p>
+        <input id="newPin" type="password" inputmode="numeric" maxlength="12" placeholder="New PIN (4–12 digits)">
+        <input id="confirmPin" type="password" inputmode="numeric" maxlength="12" placeholder="Confirm PIN">
+        <button class="btn full" onclick="savePin()">Set / Change PIN</button>
+        <button class="btn secondary full" onclick="removePin()">Remove PIN</button>
+        <button class="btn secondary full" onclick="lockNow()">Lock Screen Now</button>
+      </div>
+
+      <div class="card">
+        <div class="sub">SYSTEM & STORAGE</div>
+        <button class="btn secondary full" onclick="showAbout()">About LENA OS</button>
+        <button class="btn secondary full" onclick="resetVideos()">Clear eTube Data</button>
+      </div>
+    </section>
+
+  </div>
+
+  <nav id="nav">
+    <button aria-label="Back" onclick="goBack()">‹</button>
+    <button aria-label="Home" onclick="goHome()">⌂</button>
+    <button aria-label="Lock screen" onclick="lockNow()">⏻</button>
+  </nav>
+
+  <div id="toast"></div>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const KEYS={pin:'lena_screen_pin',name:'lena_device_name',videos:'lena_etube_videos',music:'lena_music_library_v1'};
+const SPYMO_LINK='https://qzr8n4xv1t6p.vercel.app';
+let currentPage='home',pageHistory=[],touchStartY=null,isLocked=true,pinRequired=false,toastTimer,currentMusicId=null;
+
+function toast(message){
+ const el=$('toast');el.textContent=message;el.style.display='block';
+ clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display='none',2400);
+}
+function showPage(id,remember=true){
+ if(!$ (id))return;
+ if(remember&&currentPage!==id)pageHistory.push(currentPage);
+ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+ $(id).classList.add('active');currentPage=id;
+ if(id==='settings')refreshSettings();
+ if(id==='etube')renderVideos();
+ if(id==='music')renderMusic();
+}
+function openPage(id){showPage(id)}
+function goHome(){
+  pageHistory=[];
+  document.querySelectorAll('.fullscreen-app').forEach(app=>app.classList.remove('active'));
+  showPage('home',false);
+}
+function goBack(){
+  const activeFullscreen = document.querySelector('.fullscreen-app.active');
+  if(activeFullscreen){
+    activeFullscreen.classList.remove('active');
+    return;
+  }
+  if(pageHistory.length)showPage(pageHistory.pop(),false);
+  else goHome();
+}
+function unavailable(name){toast(name+' is not available yet.')}
+
+/* Open Spymo directly in full screen */
+function openSpymo(){
+  $('spymoIframe').src = SPYMO_LINK;
+  $('spymoApp').classList.add('active');
+}
+
+/* Open Custom Browser in Fullscreen */
+function launchCustomWeb(url, title){
+  $('browserTitle').textContent = title || 'Browser';
+  $('browserIframe').src = url;
+  $('browserApp').classList.add('active');
+}
+
+function launchTypedBrowser(){
+  let url = $('customBrowserUrl').value.trim();
+  if(!url) return toast('Enter a valid website URL.');
+  if(!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  launchCustomWeb(url, url);
+}
+
+function closeFullscreenApp(appId){
+  $(appId).classList.remove('active');
+  if(appId==='spymoApp') $('spymoIframe').src='';
+  if(appId==='browserApp') $('browserIframe').src='';
+}
+
+function lockNow(){
+ isLocked=true;pinRequired=!!localStorage.getItem(KEYS.pin);
+ $('lock').classList.remove('gone');
+ $('pinBox').style.display='none';
+ $('swipeArea').style.display='flex';
+ $('unlockPin').value='';
+ $('swipeText').textContent=pinRequired?'SWIPE UP OR TAP TO ENTER PIN':'SWIPE UP TO UNLOCK';
+}
+function unlock(){
+ isLocked=false;
+ $('lock').classList.add('gone');
+ $('pinBox').style.display='none';
+ goHome();
+}
+function attemptSwipe(){
+ if(!isLocked)return;
+ if(pinRequired){
+  $('pinBox').style.display='block';
+  $('swipeArea').style.display='none';
+  $('unlockPin').focus();
+ } else {
+  unlock();
+ }
+}
+function unlockWithPin(){
+ const entered = $('unlockPin').value.trim();
+ const savedPin = localStorage.getItem(KEYS.pin);
+ if(entered === savedPin && savedPin){
+  unlock();
+ } else {
+  toast('Incorrect PIN');
+  $('unlockPin').value='';
+ }
+}
+
+// Touch & Mouse swipe handlers for Lock Screen
+const lockEl = $('lock');
+lockEl.addEventListener('touchstart', e => {
+  touchStartY = e.touches[0].clientY;
+}, {passive:true});
+
+lockEl.addEventListener('touchend', e => {
+  if(touchStartY !== null) {
+    let diff = touchStartY - e.changedTouches[0].clientY;
+    if(diff > 35) {
+      attemptSwipe();
+    }
+  }
+  touchStartY = null;
+}, {passive:true});
+
+let mouseY = null;
+lockEl.addEventListener('mousedown', e => {
+  mouseY = e.clientY;
+});
+lockEl.addEventListener('mouseup', e => {
+  if(mouseY !== null) {
+    let diff = mouseY - e.clientY;
+    if(diff > 35) {
+      attemptSwipe();
+    }
+  }
+  mouseY = null;
+});
+
+function refreshSettings(){
+ const devName = localStorage.getItem(KEYS.name)||'LENA Pro';
+ $('deviceName').value=devName;
+ $('greetingHeader').textContent = 'Hello, ' + devName + '.';
+ $('pinStatus').textContent=localStorage.getItem(KEYS.pin)?'Screen PIN is active & secured.':'No PIN configured.';
+}
+function saveDevice(){
+ const name=$('deviceName').value.trim();if(!name)return toast('Enter a valid device name.');
+ localStorage.setItem(KEYS.name,name);refreshSettings();toast('Device name updated.');
+}
+function savePin(){
+ const pin=$('newPin').value.trim(),confirm=$('confirmPin').value.trim();
+ if(!/^\d{4,12}$/.test(pin))return toast('PIN must be 4–12 digits.');
+ if(pin!==confirm)return toast('PINs do not match.');
+ localStorage.setItem(KEYS.pin,pin);
+ $('newPin').value='';$('confirmPin').value='';refreshSettings();toast('New PIN saved successfully.');
+}
+function removePin(){
+ if(!localStorage.getItem(KEYS.pin))return toast('No PIN configured.');
+ localStorage.removeItem(KEYS.pin);refreshSettings();toast('Screen PIN removed.');
+}
+function showAbout(){toast('LENA Mobile OS Pro • Version 1.1.0')}
+
+function getVideos(){try{const a=JSON.parse(localStorage.getItem(KEYS.videos)||'[]');return Array.isArray(a)?a:[]}catch{return[]}}
+function youtubeId(value){
+ try{
+  const u=new URL(value);
+  if(u.hostname==='youtu.be')return u.pathname.slice(1);
+  if(u.hostname.endsWith('youtube.com')){
+   if(u.pathname==='/watch')return u.searchParams.get('v');
+   const p=u.pathname.split('/');
+   if(['embed','shorts','live'].includes(p[1]))return p[2];
+  }
+}catch{}return null;
+}
+function addVideo(){
+ const title=$('videoTitle').value.trim(),id=youtubeId($('videoUrl').value.trim());
+ if(!title)return toast('Enter a video title.');
+ if(!id||!/^[\w-]{11}$/.test(id))return toast('Enter a valid YouTube video URL.');
+ const v=getVideos();v.unshift({title,id});localStorage.setItem(KEYS.videos,JSON.stringify(v));
+ $('videoTitle').value='';$('videoUrl').value='';renderVideos();toast('Video added to eTube.');
+}
+function renderVideos(){
+ const list=$('videoList');list.replaceChildren();const videos=getVideos();
+ if(!videos.length){const e=document.createElement('div');e.className='card';e.textContent='No videos in library yet. Add MINEcity update links below.';list.appendChild(e);return}
+ videos.forEach((v,i)=>{
+  const c=document.createElement('div');c.className='card';
+  const t=document.createElement('b');t.textContent=v.title;c.appendChild(t);
+  const f=document.createElement('iframe');f.className='videoFrame';f.style.marginTop='12px';f.src='https://www.youtube-nocookie.com/embed/'+encodeURIComponent(v.id);f.title=v.title;f.loading='lazy';f.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';f.allowFullscreen=true;c.appendChild(f);
+  const d=document.createElement('button');d.className='btn secondary full';d.textContent='Remove Video';d.onclick=()=>{const a=getVideos();a.splice(i,1);localStorage.setItem(KEYS.videos,JSON.stringify(a));renderVideos()};c.appendChild(d);list.appendChild(c);
+ });
+}
+function resetVideos(){localStorage.removeItem(KEYS.videos);renderVideos();toast('eTube video library cleared.')}
+
+function getMusic(){try{const a=JSON.parse(localStorage.getItem(KEYS.music)||'[]');return Array.isArray(a)?a:[]}catch{return[]}}
+function showMusicAdd(){$('musicAddBox').style.display='block'}
+function addMusic(){
+ const title=$('musicTitle').value.trim(),artist=$('musicArtist').value.trim()||'Unknown Artist',url=$('musicUrl').value.trim();
+ if(!title)return toast('Enter a song title.');
+ let parsed;try{parsed=new URL(url)}catch{return toast('Enter a valid audio URL.')}
+ if(parsed.protocol!=='https:')return toast('Use a secure HTTPS audio URL.');
+ const tracks=getMusic();tracks.unshift({id:Date.now().toString()+Math.random().toString(36).slice(2,7),title,artist,url});
+ localStorage.setItem(KEYS.music,JSON.stringify(tracks));
+ $('musicTitle').value='';$('musicArtist').value='';$('musicUrl').value='';$('musicAddBox').style.display='none';
+ renderMusic();toast('Song added to LENA Music.');
+}
+function renderMusic(){
+ const list=$('musicList');if(!list)return;list.replaceChildren();
+ const q=($('musicSearch').value||'').toLowerCase().trim();
+ const tracks=getMusic().filter(t=>(t.title+' '+t.artist).toLowerCase().includes(q));
+ if(!tracks.length){const e=document.createElement('div');e.className='card';e.textContent=q?'No matching tracks found.':'Your music library is empty. Add your first track!';list.appendChild(e);return}
+ tracks.index=0;
+ tracks.forEach(track=>{
+  const c=document.createElement('div');c.className='card';const row=document.createElement('div');row.className='rowitem';
+  const icon=document.createElement('div');icon.className='iconbox musicIcon';icon.textContent='♫';icon.style.width='46px';icon.style.height='46px';icon.style.fontSize='20px';
+  const info=document.createElement('div');info.style.flex='1';
+  const title=document.createElement('b');title.textContent=track.title;
+  const artist=document.createElement('p');artist.className='small';artist.textContent=track.artist;info.append(title,artist);
+  const play=document.createElement('button');play.className='btn';play.textContent='▶';play.style.padding='10px 16px';play.onclick=()=>playMusic(track.id);
+  row.append(icon,info,play);c.appendChild(row);
+  const del=document.createElement('button');del.className='btn secondary full';del.textContent='Remove from Library';
+  del.onclick=()=>{if(currentMusicId===track.id){$('musicPlayer').pause();$('musicPlayer').removeAttribute('src');$('playingTitle').textContent='Nothing playing';$('playingArtist').textContent='Select a track from your library.';currentMusicId=null}
+   localStorage.setItem(KEYS.music,JSON.stringify(getMusic().filter(t=>t.id!==track.id)));renderMusic();toast('Track removed.')};
+  c.appendChild(del);list.appendChild(c);
+ });
+}
+function playMusic(id){
+ const track=getMusic().find(t=>id===t.id);if(!track)return;
+ const p=$('musicPlayer');
+ if(currentMusicId!==id){p.src=track.url;currentMusicId=id}
+ $('playingTitle').textContent=track.title;$('playingArtist').textContent=track.artist;
+ p.play().catch(()=>toast('Playback failed. Verify direct audio URL format.'));
+}
+$('musicPlayer').addEventListener('error',()=>toast('Audio delivery error. Check Cloudinary link.'));
+function init(){
+ refreshSettings();renderVideos();renderMusic();
+ if(localStorage.getItem('lena_initialized')!=='yes'){
+  localStorage.setItem('lena_initialized','yes');isLocked=false;$('lock').classList.add('gone');
+}else lockNow();
+}
+init();
+</script>
+</body>
+</html>
